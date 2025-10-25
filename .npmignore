@@ -1,6 +1,7 @@
 # Source files
 src/
 tsconfig.json
+jest.config.js
 *.ts
 !*.d.ts
 
@@ -19,8 +20,14 @@ yarn-error.log*
 test/
 tests/
 __tests__/
+src/__tests__/
+dist/__tests__/
 *.test.js
+*.test.d.ts
+*.test.js.map
 *.spec.js
+*.spec.d.ts
+*.spec.js.map
 coverage/
 .nyc_output/
 
