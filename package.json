@@ -1,0 +1,60 @@
+{
+  "name": "gitizi-cli",
+  "version": "1.0.0",
+  "description": "Official CLI tool for managing prompts on gitizi.com 🐈‍⬛",
+  "main": "dist/index.js",
+  "bin": {
+    "izi": "./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gitizi/gitizi-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gitizi/gitizi-cli/issues"
+  },
+  "homepage": "https://gitizi.com",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx ts-node src/index.ts",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "gitizi",
+    "cli",
+    "prompts",
+    "ai",
+    "prompt-engineering",
+    "prompt-management",
+    "artificial-intelligence",
+    "llm",
+    "chatgpt",
+    "claude"
+  ],
+  "author": "Gitizi <support@gitizi.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "examples"
+  ],
+  "dependencies": {
+    "axios": "^1.12.2",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.2",
+    "conf": "^10.2.0",
+    "inquirer": "^12.10.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^24.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

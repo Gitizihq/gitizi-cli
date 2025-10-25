@@ -1,0 +1,54 @@
+# Source files
+src/
+tsconfig.json
+*.ts
+!*.d.ts
+
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+*.log
+*.tgz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+
+# Documentation (keep only README)
+SETUP_INSTRUCTIONS.md
+DELIVERY_SUMMARY.md
+PROJECT_OVERVIEW.md
+CLAUDE_CODE_COMMANDS.md
+NPM_PUBLISHING_GUIDE.md
+docs/
+
+# Build artifacts
+node_modules/
+package-lock.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+.project
+.settings/
