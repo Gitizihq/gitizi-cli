@@ -1,4 +1,5 @@
 import Conf from 'conf';
+import { URLS } from './constants';
 
 interface GitiziConfig {
   apiToken?: string;
@@ -9,7 +10,7 @@ interface GitiziConfig {
 const config = new Conf<GitiziConfig>({
   projectName: 'gitizi-cli',
   defaults: {
-    apiUrl: 'https://gitizi.com/api',
+    apiUrl: URLS.BASE_URL,
   },
 });
 
@@ -18,7 +19,8 @@ export const setToken = (token: string): void => {
 };
 
 export const getToken = (): string | undefined => {
-  return config.get('apiToken');
+  // Check environment variable first
+  return process.env.GITIZI_API_TOKEN || config.get('apiToken');
 };
 
 export const setUsername = (username: string): void => {
@@ -30,7 +32,8 @@ export const getUsername = (): string | undefined => {
 };
 
 export const getApiUrl = (): string => {
-  return config.get('apiUrl');
+  // Check environment variable first
+  return process.env.GITIZI_API_URL || config.get('apiUrl');
 };
 
 export const setApiUrl = (url: string): void => {

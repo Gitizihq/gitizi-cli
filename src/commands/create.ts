@@ -2,7 +2,10 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { getToken } from '../utils/config';
+import { requireAuth } from '../utils/auth';
+import { parseFrontmatter } from '../utils/frontmatter';
+import { validateFileExtension } from '../utils/validation';
+import { ERRORS, TIPS } from '../utils/constants';
 
 interface CreateOptions {
   name?: string;
@@ -12,9 +15,12 @@ interface CreateOptions {
 
 export async function createCommand(file: string, options: CreateOptions): Promise<void> {
   try {
-    const token = getToken();
-    if (!token) {
-      console.error(chalk.red('❌ Not authenticated. Please run: izi auth'));
+    requireAuth();
+
+    // Validate file extension
+    const extError = validateFileExtension(file);
+    if (extError) {
+      console.error(chalk.red(extError.message));
       process.exit(1);
     }
 
@@ -23,49 +29,30 @@ export async function createCommand(file: string, options: CreateOptions): Promi
     try {
       await fs.access(filePath);
     } catch {
-      console.error(chalk.red(`❌ File not found: ${file}`));
+      console.error(chalk.red(ERRORS.FILE_NOT_FOUND(file)));
       process.exit(1);
     }
 
     // Read file content
     const content = await fs.readFile(filePath, 'utf-8');
 
-    // Parse frontmatter if exists (basic YAML-like parsing)
-    let name = options.name;
-    let description = options.description;
-    let tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
-
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (frontmatterMatch) {
-      const frontmatter = frontmatterMatch[1];
-      
-      if (!name) {
-        const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
-        if (nameMatch) name = nameMatch[1].trim();
-      }
-      
-      if (!description) {
-        const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
-        if (descMatch) description = descMatch[1].trim();
-      }
-      
-      if (tags.length === 0) {
-        const tagsMatch = frontmatter.match(/^tags:\s*\[(.+)\]$/m);
-        if (tagsMatch) {
-          tags = tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, ''));
-        }
-      }
-    }
+    // Parse frontmatter
+    const parsed = parseFrontmatter(content);
+    let name = options.name || parsed.metadata.name;
+    let description = options.description || parsed.metadata.description;
+    let tags = options.tags
+      ? options.tags.split(',').map(t => t.trim())
+      : (parsed.metadata.tags || []);
 
     // Prompt for missing information
-    const questions = [];
+    const questions: any[] = [];
 
     if (!name) {
       questions.push({
         type: 'input',
         name: 'name',
         message: 'Prompt name:',
-        validate: (input: string) => input.trim() !== '' || 'Name is required',
+        validate: (input: string) => input.trim() !== '' || ERRORS.NAME_REQUIRED,
       });
     }
 
@@ -74,7 +61,7 @@ export async function createCommand(file: string, options: CreateOptions): Promi
         type: 'input',
         name: 'description',
         message: 'Prompt description:',
-        validate: (input: string) => input.trim() !== '' || 'Description is required',
+        validate: (input: string) => input.trim() !== '' || ERRORS.DESCRIPTION_REQUIRED,
       });
     }
 
@@ -88,8 +75,7 @@ export async function createCommand(file: string, options: CreateOptions): Promi
     }
 
     if (questions.length > 0) {
-      // Type assertion to handle inquirer's complex types
-      const answers = await inquirer.prompt(questions as any);
+      const answers = await inquirer.prompt(questions);
       name = name || answers.name;
       description = description || answers.description;
       if (answers.tags) {
@@ -103,9 +89,9 @@ export async function createCommand(file: string, options: CreateOptions): Promi
     if (tags.length > 0) {
       console.log(chalk.cyan(`  Tags: ${tags.join(', ')}`));
     }
-    console.log(chalk.dim(`  Content: ${content.length} characters`));
+    console.log(chalk.dim(`  Content: ${parsed.content.length} characters`));
 
-    console.log(chalk.yellow('\n💡 Use "izi push ' + file + '" to upload this prompt to gitizi.com'));
+    console.log(chalk.yellow(`\n${TIPS.PUSH(file)}`));
   } catch (error: any) {
     console.error(chalk.red(`Error: ${error.message}`));
     process.exit(1);

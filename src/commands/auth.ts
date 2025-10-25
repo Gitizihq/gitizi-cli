@@ -4,6 +4,7 @@ import ora from 'ora';
 import api from '../utils/api';
 import { setToken, setUsername, getToken } from '../utils/config';
 import { catHappy } from '../utils/cat';
+import { ERRORS, MESSAGES, TIPS, URLS } from '../utils/constants';
 
 interface AuthOptions {
   token?: string;
@@ -21,13 +22,13 @@ export async function authCommand(options: AuthOptions): Promise<void> {
           {
             type: 'confirm',
             name: 'useExisting',
-            message: 'You are already authenticated. Do you want to re-authenticate?',
+            message: MESSAGES.REAUTH_PROMPT,
             default: false,
           },
         ]);
 
         if (!useExisting) {
-          console.log(chalk.green('✓ Using existing authentication'));
+          console.log(chalk.green(MESSAGES.USING_EXISTING_AUTH));
           return;
         }
       }
@@ -40,7 +41,7 @@ export async function authCommand(options: AuthOptions): Promise<void> {
           message: 'Enter your Gitizi API token:',
           validate: (input: string) => {
             if (!input || input.trim() === '') {
-              return 'Token cannot be empty';
+              return ERRORS.TOKEN_EMPTY;
             }
             return true;
           },
@@ -57,17 +58,17 @@ export async function authCommand(options: AuthOptions): Promise<void> {
       setToken(token!);
       setUsername(result.username);
 
-      spinner.succeed(chalk.green('Authentication successful!'));
+      spinner.succeed(chalk.green(MESSAGES.AUTH_SUCCESS));
       console.log(chalk.cyan(catHappy));
-      console.log(chalk.bold(`Welcome, ${chalk.cyan(result.username)}! 🎉`));
-      console.log(chalk.dim('\nYour token has been saved securely.'));
+      console.log(chalk.bold(MESSAGES.WELCOME(chalk.cyan(result.username))));
+      console.log(chalk.dim(MESSAGES.TOKEN_SAVED));
     } catch (error: any) {
-      spinner.fail(chalk.red('Authentication failed'));
+      spinner.fail(chalk.red(ERRORS.AUTHENTICATION_FAILED));
       console.error(chalk.red(`Error: ${error.message}`));
-      console.log(chalk.yellow('\nTo get your API token:'));
-      console.log(chalk.dim('1. Visit https://gitizi.com/settings/tokens'));
-      console.log(chalk.dim('2. Generate a new token'));
-      console.log(chalk.dim('3. Run: izi auth --token YOUR_TOKEN'));
+      console.log(chalk.yellow(TIPS.GET_TOKEN[0]));
+      console.log(chalk.dim(TIPS.GET_TOKEN[1]));
+      console.log(chalk.dim(TIPS.GET_TOKEN[2]));
+      console.log(chalk.dim(TIPS.GET_TOKEN[3]));
       process.exit(1);
     }
   } catch (error: any) {

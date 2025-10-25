@@ -7,7 +7,12 @@ import { searchCommand } from './commands/search';
 import { createCommand } from './commands/create';
 import { pushCommand } from './commands/push';
 import { cloneCommand } from './commands/clone';
+import { logoutCommand } from './commands/logout';
+import { whoamiCommand } from './commands/whoami';
+import { configCommand } from './commands/config';
+import { listCommand } from './commands/list';
 import { catAscii } from './utils/cat';
+import { version } from '../package.json';
 
 const program = new Command();
 
@@ -17,7 +22,7 @@ console.log(chalk.bold.cyan('🐈‍⬛ Gitizi CLI - Your friendly prompt manage
 program
   .name('izi')
   .description('CLI tool for managing prompts on gitizi.com')
-  .version('1.0.0');
+  .version(version);
 
 program
   .command('auth')
@@ -54,5 +59,29 @@ program
   .argument('<prompt-id>', 'Prompt ID to clone')
   .option('-o, --output <path>', 'Output file path', './prompt.md')
   .action(cloneCommand);
+
+program
+  .command('list')
+  .description('List your prompts')
+  .option('-l, --limit <number>', 'Limit results', '10')
+  .action(listCommand);
+
+program
+  .command('logout')
+  .description('Clear stored credentials')
+  .action(logoutCommand);
+
+program
+  .command('whoami')
+  .description('Show current user')
+  .action(whoamiCommand);
+
+program
+  .command('config')
+  .description('Manage configuration')
+  .argument('<action>', 'Action: get, set, or list')
+  .argument('[key]', 'Config key')
+  .argument('[value]', 'Config value')
+  .action(configCommand);
 
 program.parse();

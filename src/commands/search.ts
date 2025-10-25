@@ -1,8 +1,9 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import api from '../utils/api';
-import { getToken } from '../utils/config';
+import { requireAuth } from '../utils/auth';
 import { catThinking } from '../utils/cat';
+import { ERRORS, MESSAGES, TIPS } from '../utils/constants';
 
 interface SearchOptions {
   limit: string;
@@ -10,11 +11,7 @@ interface SearchOptions {
 
 export async function searchCommand(query: string, options: SearchOptions): Promise<void> {
   try {
-    const token = getToken();
-    if (!token) {
-      console.error(chalk.red('❌ Not authenticated. Please run: izi auth'));
-      process.exit(1);
-    }
+    requireAuth();
 
     console.log(chalk.cyan(catThinking));
     const spinner = ora(`Searching for "${query}"...`).start();
@@ -26,7 +23,7 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
       spinner.succeed(chalk.green(`Found ${results.total} prompts`));
 
       if (results.prompts.length === 0) {
-        console.log(chalk.yellow('\nNo prompts found matching your query.'));
+        console.log(chalk.yellow(MESSAGES.NO_PROMPTS_FOUND));
         return;
       }
 
@@ -36,19 +33,19 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
         console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name}`));
         console.log(chalk.dim(`   ID: ${prompt.id}`));
         console.log(chalk.white(`   ${prompt.description}`));
-        
+
         if (prompt.tags && prompt.tags.length > 0) {
           const tags = prompt.tags.map(tag => chalk.blue(`#${tag}`)).join(' ');
           console.log(`   ${tags}`);
         }
-        
+
         console.log(chalk.dim(`   By ${prompt.author} • ${new Date(prompt.createdAt).toLocaleDateString()}`));
         console.log();
       });
 
-      console.log(chalk.dim(`\n💡 Tip: Use "izi clone <prompt-id>" to download a prompt`));
+      console.log(chalk.dim(`\n${TIPS.CLONE_GENERAL}`));
     } catch (error: any) {
-      spinner.fail(chalk.red('Search failed'));
+      spinner.fail(chalk.red(ERRORS.SEARCH_FAILED));
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
     }
