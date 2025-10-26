@@ -47,14 +47,6 @@ class GitiziAPI {
     });
 
     if (error) {
-      // Add debug info for development
-      if (process.env.DEBUG) {
-        console.log('Supabase function error:', {
-          function: functionName,
-          error: error,
-          context: (error as any).context,
-        });
-      }
       throw error;
     }
 
@@ -64,10 +56,32 @@ class GitiziAPI {
   /**
    * Formats error messages from API responses
    */
-  private formatError(error: any, defaultMessage: string): string {
+  private async formatError(error: any, defaultMessage: string): Promise<string> {
     if (error instanceof FunctionsHttpError) {
       const context = error.context as any;
-      return context?.message || `${defaultMessage}: HTTP error`;
+
+      // Try to read the response body for error details
+      try {
+        const response = context as Response;
+        if (response && typeof response.json === 'function') {
+          const errorData = await response.json() as any;
+          if (errorData?.error) {
+            return `${defaultMessage}: ${errorData.error}`;
+          }
+          if (errorData?.message) {
+            return `${defaultMessage}: ${errorData.message}`;
+          }
+        }
+      } catch (e) {
+        // Failed to parse error body, continue
+      }
+
+      // Return status code information
+      if (context?.status) {
+        return `${defaultMessage} (HTTP ${context.status})`;
+      }
+
+      return `${defaultMessage}: HTTP error`;
     }
 
     if (error instanceof FunctionsRelayError) {
@@ -90,7 +104,8 @@ class GitiziAPI {
       const result = await this.invokeFunction<{ success: boolean; username: string }>('api-auth-verify', { token });
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Authentication failed'));
+      const message = await this.formatError(error, 'Authentication failed');
+      throw new Error(message);
     }
   }
 
@@ -102,7 +117,8 @@ class GitiziAPI {
       });
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Search failed'));
+      const message = await this.formatError(error, 'Search failed');
+      throw new Error(message);
     }
   }
 
@@ -111,7 +127,8 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt>('api-get-prompt', { id });
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Failed to fetch prompt'));
+      const message = await this.formatError(error, 'Failed to fetch prompt');
+      throw new Error(message);
     }
   }
 
@@ -125,7 +142,8 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt>('api-create-prompt', data);
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Failed to create prompt'));
+      const message = await this.formatError(error, 'Failed to create prompt');
+      throw new Error(message);
     }
   }
 
@@ -145,7 +163,8 @@ class GitiziAPI {
       });
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Failed to update prompt'));
+      const message = await this.formatError(error, 'Failed to update prompt');
+      throw new Error(message);
     }
   }
 
@@ -154,7 +173,8 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt[]>('api-list-user-prompts');
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Failed to list prompts'));
+      const message = await this.formatError(error, 'Failed to list prompts');
+      throw new Error(message);
     }
   }
 
@@ -163,7 +183,8 @@ class GitiziAPI {
       const result = await this.invokeFunction<{ username: string; email?: string }>('api-get-current-user');
       return result;
     } catch (error: any) {
-      throw new Error(this.formatError(error, 'Failed to get user info'));
+      const message = await this.formatError(error, 'Failed to get user info');
+      throw new Error(message);
     }
   }
 }
