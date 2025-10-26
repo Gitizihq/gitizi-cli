@@ -107,8 +107,9 @@ class GitiziAPI {
 
   async searchPrompts(query: string, limit: number = 10): Promise<SearchResult> {
     try {
-      const response = await this.client.get('/prompts/search', {
-        params: { q: query, limit },
+      const response = await this.client.post('/api-search-prompts', {
+        query,
+        limit,
       });
       return response.data;
     } catch (error: any) {
@@ -118,7 +119,9 @@ class GitiziAPI {
 
   async getPrompt(id: string): Promise<Prompt> {
     try {
-      const response = await this.client.get(`/prompts/${id}`);
+      const response = await this.client.post('/api-get-prompt', {
+        id,
+      });
       return response.data;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to fetch prompt'));
@@ -132,7 +135,7 @@ class GitiziAPI {
     tags: string[];
   }): Promise<Prompt> {
     try {
-      const response = await this.client.post('/prompts', data);
+      const response = await this.client.post('/api-create-prompt', data);
       return response.data;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to create prompt'));

@@ -18,7 +18,7 @@ export const ERRORS = {
 export const URLS = {
   PROMPTS: (id: string) => `https://gitizi.com/prompts/${id}`,
   TOKEN_SETTINGS: 'https://gitizi.com/settings/tokens',
-  BASE_URL: 'https://gitizi.com/api',
+  BASE_URL: 'https://sewwdxmqorokboxzpsxu.supabase.co/functions/v1',
 };
 
 export const MESSAGES = {
