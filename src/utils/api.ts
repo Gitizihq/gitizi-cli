@@ -95,7 +95,7 @@ class GitiziAPI {
 
   async authenticate(token: string): Promise<{ success: boolean; username: string }> {
     try {
-      const response = await this.client.post('/auth/verify', { token });
+      const response = await this.client.post('/api-auth-verify', { token });
       return {
         success: true,
         username: response.data.username,
@@ -152,7 +152,10 @@ class GitiziAPI {
     }
   ): Promise<Prompt> {
     try {
-      const response = await this.client.put(`/prompts/${id}`, data);
+      const response = await this.client.post('/api-update-prompt', {
+        id,
+        ...data,
+      });
       return response.data;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to update prompt'));
@@ -161,7 +164,7 @@ class GitiziAPI {
 
   async listUserPrompts(): Promise<Prompt[]> {
     try {
-      const response = await this.client.get('/prompts/me');
+      const response = await this.client.post('/api-list-user-prompts');
       return response.data;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to list prompts'));
@@ -170,7 +173,7 @@ class GitiziAPI {
 
   async getCurrentUser(): Promise<{ username: string; email?: string }> {
     try {
-      const response = await this.client.get('/auth/me');
+      const response = await this.client.post('/api-get-current-user');
       return response.data;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to get user info'));
