@@ -54,7 +54,7 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
         return;
       }
 
-      console.log(chalk.bold('\n📚 Search Results:\n'));
+      console.log(chalk.bold('\nSearch Results:\n'));
 
       prompts.forEach((prompt, index) => {
         console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name || 'Untitled'}`));

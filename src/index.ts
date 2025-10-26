@@ -17,7 +17,7 @@ import { version } from '../package.json';
 const program = new Command();
 
 console.log(chalk.cyan(catAscii));
-console.log(chalk.bold.cyan('🐈‍⬛ Gitizi CLI - Your friendly prompt manager\n'));
+console.log(chalk.bold.cyan('Gitizi CLI - Your friendly prompt manager\n'));
 
 program
   .name('izi')

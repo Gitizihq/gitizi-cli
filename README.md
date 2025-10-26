@@ -1,15 +1,15 @@
-# 🐈‍⬛ Gitizi CLI (izi)
+# Gitizi CLI (izi)
 
 The official command-line interface for [gitizi.com](https://gitizi.com) - manage your AI prompts like a pro!
 
 ## Features
 
-- 🔐 **Authentication** - Secure token-based authentication with gitizi.com
-- 🔍 **Search Prompts** - Find prompts from the community
-- 📝 **Create Prompts** - Create prompts from markdown files with frontmatter
-- 🚀 **Push Prompts** - Upload and update prompts to gitizi.com
-- 📥 **Clone Prompts** - Download existing prompts to edit locally
-- 🎨 **Colorful Output** - Beautiful terminal experience with your friendly cat mascot
+- **Authentication** - Secure token-based authentication with gitizi.com
+- **Search Prompts** - Find prompts from the community
+- **Create Prompts** - Create prompts from markdown files with frontmatter
+- **Push Prompts** - Upload and update prompts to gitizi.com
+- **Clone Prompts** - Download existing prompts to edit locally
+- **Colorful Output** - Beautiful terminal experience with your friendly cat mascot
 
 ## Installation
 
@@ -187,4 +187,4 @@ MIT
 
 ---
 
-Made with 💙 by the Gitizi team 🐈‍⬛
+Made with love by the Gitizi team

@@ -29,7 +29,7 @@ export async function listCommand(options: ListOptions): Promise<void> {
         return;
       }
 
-      console.log(chalk.bold('\n📚 Your Prompts:\n'));
+      console.log(chalk.bold('\nYour Prompts:\n'));
 
       displayPrompts.forEach((prompt, index) => {
         console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name}`));
