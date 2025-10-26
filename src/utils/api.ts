@@ -1,7 +1,6 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import axiosRetry from 'axios-retry';
-import { getToken, getApiUrl } from './config';
-import { LIMITS } from './constants';
+import { createClient, SupabaseClient, FunctionsHttpError, FunctionsRelayError, FunctionsFetchError } from '@supabase/supabase-js';
+import { getToken } from './config';
+import { SUPABASE } from './constants';
 
 export interface Prompt {
   id: string;
@@ -26,80 +25,70 @@ export interface ApiErrorResponse {
 }
 
 class GitiziAPI {
-  private client: AxiosInstance;
+  private supabase: SupabaseClient;
 
   constructor() {
-    this.client = axios.create({
-      baseURL: getApiUrl(),
-      timeout: LIMITS.API_TIMEOUT,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    this.supabase = createClient(SUPABASE.URL, SUPABASE.ANON_KEY);
+  }
+
+  /**
+   * Invokes a Supabase Edge Function with optional user token
+   * The Supabase client automatically sends the Authorization header with the anon key.
+   * User tokens are sent in the x-user-token header for the Edge Function to verify.
+   */
+  private async invokeFunction<T = any>(functionName: string, body?: any): Promise<T> {
+    const userToken = getToken();
+
+    const { data, error } = await this.supabase.functions.invoke(functionName, {
+      body,
+      headers: userToken ? {
+        'x-user-token': userToken,
+      } : undefined,
     });
 
-    // Configure retry logic
-    axiosRetry(this.client, {
-      retries: LIMITS.RETRY_ATTEMPTS,
-      retryDelay: axiosRetry.exponentialDelay,
-      retryCondition: (error) => {
-        // Retry on network errors or 5xx status codes
-        return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          (error.response?.status !== undefined && error.response.status >= 500)
-        );
-      },
-    });
-
-    // Add auth token to requests if available
-    this.client.interceptors.request.use((config) => {
-      const token = getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    if (error) {
+      // Add debug info for development
+      if (process.env.DEBUG) {
+        console.log('Supabase function error:', {
+          function: functionName,
+          error: error,
+          context: (error as any).context,
+        });
       }
-      return config;
-    });
+      throw error;
+    }
+
+    return data as T;
   }
 
   /**
    * Formats error messages from API responses
    */
   private formatError(error: any, defaultMessage: string): string {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiErrorResponse>;
-      const status = axiosError.response?.status;
-      const message = axiosError.response?.data?.message;
-
-      if (status === 429) {
-        return 'Rate limit exceeded. Please try again later.';
-      }
-
-      if (status && message) {
-        return `${defaultMessage} (${status}): ${message}`;
-      }
-
-      if (message) {
-        return message;
-      }
-
-      if (axiosError.code === 'ECONNABORTED') {
-        return 'Request timeout. Please check your connection and try again.';
-      }
-
-      if (axiosError.code === 'ENOTFOUND' || axiosError.code === 'ECONNREFUSED') {
-        return 'Cannot connect to server. Please check your internet connection.';
-      }
+    if (error instanceof FunctionsHttpError) {
+      const context = error.context as any;
+      return context?.message || `${defaultMessage}: HTTP error`;
     }
 
-    return error.message || defaultMessage;
+    if (error instanceof FunctionsRelayError) {
+      return `${defaultMessage}: Relay error`;
+    }
+
+    if (error instanceof FunctionsFetchError) {
+      return 'Cannot connect to server. Please check your internet connection.';
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    return defaultMessage;
   }
 
   async authenticate(token: string): Promise<{ success: boolean; username: string }> {
     try {
-      const response = await this.client.post('/api-auth-verify', { token });
-      return {
-        success: true,
-        username: response.data.username,
-      };
+      const result = await this.invokeFunction<{ success: boolean; username: string }>('api-auth-verify', { token });
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Authentication failed'));
     }
@@ -107,11 +96,11 @@ class GitiziAPI {
 
   async searchPrompts(query: string, limit: number = 10): Promise<SearchResult> {
     try {
-      const response = await this.client.post('/api-search-prompts', {
+      const result = await this.invokeFunction<SearchResult>('api-search-prompts', {
         query,
         limit,
       });
-      return response.data;
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Search failed'));
     }
@@ -119,10 +108,8 @@ class GitiziAPI {
 
   async getPrompt(id: string): Promise<Prompt> {
     try {
-      const response = await this.client.post('/api-get-prompt', {
-        id,
-      });
-      return response.data;
+      const result = await this.invokeFunction<Prompt>('api-get-prompt', { id });
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to fetch prompt'));
     }
@@ -135,8 +122,8 @@ class GitiziAPI {
     tags: string[];
   }): Promise<Prompt> {
     try {
-      const response = await this.client.post('/api-create-prompt', data);
-      return response.data;
+      const result = await this.invokeFunction<Prompt>('api-create-prompt', data);
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to create prompt'));
     }
@@ -152,11 +139,11 @@ class GitiziAPI {
     }
   ): Promise<Prompt> {
     try {
-      const response = await this.client.post('/api-update-prompt', {
+      const result = await this.invokeFunction<Prompt>('api-update-prompt', {
         id,
         ...data,
       });
-      return response.data;
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to update prompt'));
     }
@@ -164,8 +151,8 @@ class GitiziAPI {
 
   async listUserPrompts(): Promise<Prompt[]> {
     try {
-      const response = await this.client.post('/api-list-user-prompts');
-      return response.data;
+      const result = await this.invokeFunction<Prompt[]>('api-list-user-prompts');
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to list prompts'));
     }
@@ -173,8 +160,8 @@ class GitiziAPI {
 
   async getCurrentUser(): Promise<{ username: string; email?: string }> {
     try {
-      const response = await this.client.post('/api-get-current-user');
-      return response.data;
+      const result = await this.invokeFunction<{ username: string; email?: string }>('api-get-current-user');
+      return result;
     } catch (error: any) {
       throw new Error(this.formatError(error, 'Failed to get user info'));
     }

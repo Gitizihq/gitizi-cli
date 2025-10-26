@@ -18,7 +18,12 @@ export const ERRORS = {
 export const URLS = {
   PROMPTS: (id: string) => `https://gitizi.com/prompts/${id}`,
   TOKEN_SETTINGS: 'https://gitizi.com/settings/tokens',
-  BASE_URL: 'https://sewwdxmqorokboxzpsxu.supabase.co/functions/v1',
+  BASE_URL: 'https://gitizi.com/api',
+};
+
+export const SUPABASE = {
+  URL: 'https://sewwdxmqorokboxzpsxu.supabase.co',
+  ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNld3dkeG1xb3Jva2JveHpwc3h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg5NDU4NTcsImV4cCI6MjA1NDUyMTg1N30.I0BElLPrcNKBIHDlhPAjZl5eRmEWqNnYEeJqrGbgAHc',
 };
 
 export const MESSAGES = {

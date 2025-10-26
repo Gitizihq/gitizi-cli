@@ -1,6 +1,6 @@
 {
   "name": "gitizi-cli",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Official CLI tool for managing prompts on gitizi.com",
   "main": "dist/index.js",
   "bin": {
@@ -46,6 +46,7 @@
     "examples"
   ],
   "dependencies": {
+    "@supabase/supabase-js": "^2.76.1",
     "axios": "^1.12.2",
     "axios-retry": "^4.5.0",
     "chalk": "^4.1.2",
