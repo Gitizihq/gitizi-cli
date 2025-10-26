@@ -54,13 +54,17 @@ export async function authCommand(options: AuthOptions): Promise<void> {
 
     try {
       const result = await api.authenticate(token!);
-      
+
       setToken(token!);
-      setUsername(result.username);
+      if (result.username) {
+        setUsername(result.username);
+      }
 
       spinner.succeed(chalk.green(MESSAGES.AUTH_SUCCESS));
       console.log(chalk.cyan(catHappy));
-      console.log(chalk.bold(MESSAGES.WELCOME(chalk.cyan(result.username))));
+      if (result.username) {
+        console.log(chalk.bold(MESSAGES.WELCOME(chalk.cyan(result.username))));
+      }
       console.log(chalk.dim(MESSAGES.TOKEN_SAVED));
     } catch (error: any) {
       spinner.fail(chalk.red(ERRORS.AUTHENTICATION_FAILED));

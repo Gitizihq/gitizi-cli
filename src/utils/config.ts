@@ -1,17 +1,8 @@
 import Conf from 'conf';
 import { URLS } from './constants';
 
-interface GitiziConfig {
-  apiToken?: string;
-  apiUrl: string;
-  username?: string;
-}
-
-const config = new Conf<GitiziConfig>({
+const config = new Conf({
   projectName: 'gitizi-cli',
-  defaults: {
-    apiUrl: URLS.BASE_URL,
-  },
 });
 
 export const setToken = (token: string): void => {
@@ -20,7 +11,7 @@ export const setToken = (token: string): void => {
 
 export const getToken = (): string | undefined => {
   // Check environment variable first
-  return process.env.GITIZI_API_TOKEN || config.get('apiToken');
+  return process.env.GITIZI_API_TOKEN || (config.get('apiToken') as string | undefined);
 };
 
 export const setUsername = (username: string): void => {
@@ -28,12 +19,12 @@ export const setUsername = (username: string): void => {
 };
 
 export const getUsername = (): string | undefined => {
-  return config.get('username');
+  return config.get('username') as string | undefined;
 };
 
 export const getApiUrl = (): string => {
   // Check environment variable first
-  return process.env.GITIZI_API_URL || config.get('apiUrl');
+  return process.env.GITIZI_API_URL || (config.get('apiUrl') as string) || URLS.BASE_URL;
 };
 
 export const setApiUrl = (url: string): void => {
@@ -41,7 +32,8 @@ export const setApiUrl = (url: string): void => {
 };
 
 export const clearConfig = (): void => {
-  config.clear();
+  config.delete('apiToken');
+  config.delete('username');
 };
 
 export default config;

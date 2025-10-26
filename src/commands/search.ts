@@ -18,28 +18,59 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
 
     try {
       const limit = parseInt(options.limit, 10);
-      const results = await api.searchPrompts(query, limit);
+      const response: any = await api.searchPrompts(query, limit);
 
-      spinner.succeed(chalk.green(`Found ${results.total} prompts`));
+      // Handle different possible API response formats
+      let prompts: any[] = [];
+      let total = 0;
 
-      if (results.prompts.length === 0) {
+      if (response && typeof response === 'object') {
+        // Check if response has prompts array directly
+        if (Array.isArray(response.prompts)) {
+          prompts = response.prompts;
+          total = response.total || prompts.length;
+        }
+        // Check if response itself is an array
+        else if (Array.isArray(response)) {
+          prompts = response;
+          total = prompts.length;
+        }
+        // Check if response has data property
+        else if (response.data) {
+          if (Array.isArray(response.data.prompts)) {
+            prompts = response.data.prompts;
+            total = response.data.total || prompts.length;
+          } else if (Array.isArray(response.data)) {
+            prompts = response.data;
+            total = prompts.length;
+          }
+        }
+      }
+
+      spinner.succeed(chalk.green(`Found ${total} prompt${total !== 1 ? 's' : ''}`));
+
+      if (prompts.length === 0) {
         console.log(chalk.yellow(MESSAGES.NO_PROMPTS_FOUND));
         return;
       }
 
       console.log(chalk.bold('\n📚 Search Results:\n'));
 
-      results.prompts.forEach((prompt, index) => {
-        console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name}`));
+      prompts.forEach((prompt, index) => {
+        console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name || 'Untitled'}`));
         console.log(chalk.dim(`   ID: ${prompt.id}`));
-        console.log(chalk.white(`   ${prompt.description}`));
+        if (prompt.description) {
+          console.log(chalk.white(`   ${prompt.description}`));
+        }
 
-        if (prompt.tags && prompt.tags.length > 0) {
-          const tags = prompt.tags.map(tag => chalk.blue(`#${tag}`)).join(' ');
+        if (prompt.tags && Array.isArray(prompt.tags) && prompt.tags.length > 0) {
+          const tags = prompt.tags.map((tag: string) => chalk.blue(`#${tag}`)).join(' ');
           console.log(`   ${tags}`);
         }
 
-        console.log(chalk.dim(`   By ${prompt.author} • ${new Date(prompt.createdAt).toLocaleDateString()}`));
+        const author = prompt.author || 'Unknown';
+        const date = prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'Unknown date';
+        console.log(chalk.dim(`   By ${author} • ${date}`));
         console.log();
       });
 

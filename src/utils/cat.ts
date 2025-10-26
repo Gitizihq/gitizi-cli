@@ -1,25 +1,7 @@
-export const catAscii = `
-    /\\_/\\  
-   ( o.o ) 
-    > ^ <
-   /|   |\\
-  (_|   |_)
-`;
+export const catAscii = `  /ᐠ｡ꞈ｡ᐟ\\`;
 
-export const catHappy = `
-    /\\_/\\  
-   ( ^.^ ) 
-    > ♥ <
-`;
+export const catHappy = `  ฅ/ᐠ. ̫ .ᐟ\\ฅ`;
 
-export const catSad = `
-    /\\_/\\  
-   ( ;.; ) 
-    > ~ <
-`;
+export const catSad = `  /ᐠ –ꞈ –ᐟ\\`;
 
-export const catThinking = `
-    /\\_/\\  
-   ( -.o ) 
-    > ? <
-`;
+export const catThinking = `  /ᐠ｡ꞈ｡ᐟ\\?`;

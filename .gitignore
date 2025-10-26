@@ -1,9 +1,51 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+*.tgz
+
+# Logs
 *.log
-.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables and secrets
 .env
 .env.local
-*.tgz
+.env.*.local
+.env.development
+.env.production
+*.pem
+*.key
+*.cert
+credentials.json
+secrets.*
+config.local.*
+
+# API keys and tokens (just in case)
+.api-keys
+*.token
+api-tokens.json
+
+# IDE and editor files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backend implementation files (not for public repo)
+backend-examples/
+BACKEND_API_GUIDE.md
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
