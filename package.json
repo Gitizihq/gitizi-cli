@@ -1,6 +1,6 @@
 {
   "name": "gitizi-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Official CLI tool for managing prompts on gitizi.com 🐈‍⬛",
   "main": "dist/index.js",
   "bin": {
