@@ -20,30 +20,25 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
       const limit = parseInt(options.limit, 10);
       const response: any = await api.searchPrompts(query, limit);
 
-      // Handle different possible API response formats
+      // Handle Gitizi database response format
       let prompts: any[] = [];
       let total = 0;
 
       if (response && typeof response === 'object') {
-        // Check if response has prompts array directly
-        if (Array.isArray(response.prompts)) {
+        // Gitizi API returns { data: [...] }
+        if (Array.isArray(response.data)) {
+          prompts = response.data;
+          total = prompts.length;
+        }
+        // Legacy format: { prompts: [...], total: N }
+        else if (Array.isArray(response.prompts)) {
           prompts = response.prompts;
           total = response.total || prompts.length;
         }
-        // Check if response itself is an array
+        // Direct array
         else if (Array.isArray(response)) {
           prompts = response;
           total = prompts.length;
-        }
-        // Check if response has data property
-        else if (response.data) {
-          if (Array.isArray(response.data.prompts)) {
-            prompts = response.data.prompts;
-            total = response.data.total || prompts.length;
-          } else if (Array.isArray(response.data)) {
-            prompts = response.data;
-            total = prompts.length;
-          }
         }
       }
 
@@ -57,20 +52,31 @@ export async function searchCommand(query: string, options: SearchOptions): Prom
       console.log(chalk.bold('\nSearch Results:\n'));
 
       prompts.forEach((prompt, index) => {
-        console.log(chalk.bold.cyan(`${index + 1}. ${prompt.name || 'Untitled'}`));
-        console.log(chalk.dim(`   ID: ${prompt.id}`));
-        if (prompt.description) {
-          console.log(chalk.white(`   ${prompt.description}`));
+        // Support both formats: title/name, summary/description
+        const title = prompt.title || prompt.name || 'Untitled';
+        const summary = prompt.summary || prompt.description || '';
+        const owner = prompt.owner_id || prompt.author || 'Unknown';
+        const createdDate = prompt.created_at || prompt.createdAt;
+
+        console.log(chalk.bold.cyan(`${index + 1}. ${title}`));
+        console.log(chalk.dim(`   Slug: ${prompt.slug || prompt.id}`));
+
+        if (summary) {
+          // Truncate long summaries
+          const maxLength = 100;
+          const displaySummary = summary.length > maxLength
+            ? summary.substring(0, maxLength) + '...'
+            : summary;
+          console.log(chalk.white(`   ${displaySummary}`));
         }
 
         if (prompt.tags && Array.isArray(prompt.tags) && prompt.tags.length > 0) {
-          const tags = prompt.tags.map((tag: string) => chalk.blue(`#${tag}`)).join(' ');
+          const tags = prompt.tags.slice(0, 5).map((tag: string) => chalk.blue(`#${tag}`)).join(' ');
           console.log(`   ${tags}`);
         }
 
-        const author = prompt.author || 'Unknown';
-        const date = prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'Unknown date';
-        console.log(chalk.dim(`   By ${author} • ${date}`));
+        const date = createdDate ? new Date(createdDate).toLocaleDateString() : '';
+        console.log(chalk.dim(`   ${date}${prompt.star_count ? ` • ⭐ ${prompt.star_count}` : ''}`));
         console.log();
       });
 

@@ -1,4 +1,3 @@
-import { createClient, SupabaseClient, FunctionsHttpError, FunctionsRelayError, FunctionsFetchError } from '@supabase/supabase-js';
 import { getToken } from './config';
 import { SUPABASE } from './constants';
 
@@ -25,73 +24,44 @@ export interface ApiErrorResponse {
 }
 
 class GitiziAPI {
-  private supabase: SupabaseClient;
+  private baseUrl: string;
 
   constructor() {
-    this.supabase = createClient(SUPABASE.URL, SUPABASE.ANON_KEY);
+    this.baseUrl = `${SUPABASE.URL}/functions/v1`;
   }
 
   /**
-   * Invokes a Supabase Edge Function with optional user token
-   * The Supabase client automatically sends the Authorization header with the anon key.
-   * User tokens are sent in the x-user-token header for the Edge Function to verify.
+   * Invokes a Supabase Edge Function with direct fetch
+   * Sends user token in Authorization: Bearer header if authenticated
+   * Otherwise uses anon key
    */
   private async invokeFunction<T = any>(functionName: string, body?: any): Promise<T> {
     const userToken = getToken();
 
-    const { data, error } = await this.supabase.functions.invoke(functionName, {
-      body,
-      headers: userToken ? {
-        'x-user-token': userToken,
-      } : undefined,
+    // Use user token if available, otherwise use anon key
+    const authToken = userToken || SUPABASE.ANON_KEY;
+
+    const response = await fetch(`${this.baseUrl}/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body || {}),
     });
 
-    if (error) {
-      throw error;
+    if (!response.ok) {
+      const errorData: any = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return data as T;
+    return await response.json() as T;
   }
 
   /**
    * Formats error messages from API responses
    */
-  private async formatError(error: any, defaultMessage: string): Promise<string> {
-    if (error instanceof FunctionsHttpError) {
-      const context = error.context as any;
-
-      // Try to read the response body for error details
-      try {
-        const response = context as Response;
-        if (response && typeof response.json === 'function') {
-          const errorData = await response.json() as any;
-          if (errorData?.error) {
-            return `${defaultMessage}: ${errorData.error}`;
-          }
-          if (errorData?.message) {
-            return `${defaultMessage}: ${errorData.message}`;
-          }
-        }
-      } catch (e) {
-        // Failed to parse error body, continue
-      }
-
-      // Return status code information
-      if (context?.status) {
-        return `${defaultMessage} (HTTP ${context.status})`;
-      }
-
-      return `${defaultMessage}: HTTP error`;
-    }
-
-    if (error instanceof FunctionsRelayError) {
-      return `${defaultMessage}: Relay error`;
-    }
-
-    if (error instanceof FunctionsFetchError) {
-      return 'Cannot connect to server. Please check your internet connection.';
-    }
-
+  private formatError(error: any, defaultMessage: string): string {
     if (error?.message) {
       return error.message;
     }
@@ -101,10 +71,24 @@ class GitiziAPI {
 
   async authenticate(token: string): Promise<{ success: boolean; username: string }> {
     try {
-      const result = await this.invokeFunction<{ success: boolean; username: string }>('api-auth-verify', { token });
-      return result;
+      // For authentication, send the token being verified in Authorization header
+      const response = await fetch(`${this.baseUrl}/api-auth-verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        const errorData: any = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json() as { success: boolean; username: string };
     } catch (error: any) {
-      const message = await this.formatError(error, 'Authentication failed');
+      const message = this.formatError(error, 'Authentication failed');
       throw new Error(message);
     }
   }
@@ -117,7 +101,7 @@ class GitiziAPI {
       });
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Search failed');
+      const message = this.formatError(error, 'Search failed');
       throw new Error(message);
     }
   }
@@ -127,7 +111,7 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt>('api-get-prompt', { id });
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Failed to fetch prompt');
+      const message = this.formatError(error, 'Failed to fetch prompt');
       throw new Error(message);
     }
   }
@@ -142,7 +126,7 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt>('api-create-prompt', data);
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Failed to create prompt');
+      const message = this.formatError(error, 'Failed to create prompt');
       throw new Error(message);
     }
   }
@@ -163,7 +147,7 @@ class GitiziAPI {
       });
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Failed to update prompt');
+      const message = this.formatError(error, 'Failed to update prompt');
       throw new Error(message);
     }
   }
@@ -173,7 +157,7 @@ class GitiziAPI {
       const result = await this.invokeFunction<Prompt[]>('api-list-user-prompts');
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Failed to list prompts');
+      const message = this.formatError(error, 'Failed to list prompts');
       throw new Error(message);
     }
   }
@@ -183,7 +167,7 @@ class GitiziAPI {
       const result = await this.invokeFunction<{ username: string; email?: string }>('api-get-current-user');
       return result;
     } catch (error: any) {
-      const message = await this.formatError(error, 'Failed to get user info');
+      const message = this.formatError(error, 'Failed to get user info');
       throw new Error(message);
     }
   }
